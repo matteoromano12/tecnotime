@@ -25,6 +25,7 @@
   <section class="clock-section">
     <div class="clock-label">Orario corrente</div>
     <div class="clock-display" id="clock">--:--</div>
+    <div class="clock-day" id="clockDay">--</div>
     <div class="clock-sub">1 minuto ogni 7 secondi</div>
   </section>
 
@@ -56,10 +57,10 @@
       <h3 class="admin-section-title">⏱ Controllo Orario</h3>
       <p class="admin-desc">Imposta un nuovo orario di partenza. L'orologio proseguirà da lì per tutti.</p>
       <div class="time-control">
-        <input type="time" id="adminTimeInput" value="00:00" />
+        <select id="adminDayInput"><option value="0">Domenica</option><option value="1">Lunedì</option><option value="2">Martedì</option><option value="3">Mercoledì</option><option value="4">Giovedì</option><option value="5">Venerdì</option><option value="6">Sabato</option></select> <input type="time" id="adminTimeInput" value="00:00" />
         <button class="btn-primary" onclick="setAdminTime()">Imposta Orario</button>
       </div>
-      <div class="current-time-info">Orario simulato attuale: <strong id="adminCurrentTime">--:--</strong></div>
+      <div class="current-time-info">Orario simulato attuale: <strong id="adminCurrentDay">--</strong> <strong id="adminCurrentTime">--:--</strong></div>
     </section>
 
     <section class="admin-card">
@@ -116,7 +117,7 @@
       <div class="form-group">
         <label>Tuo contatto Telegram *</label>
         <input type="text" id="f_telegram" placeholder="es. @tuonomeutente" />
-        <div class="field-hint">Non verrà mostrato pubblicamente.</div>
+        <div class="field-hint">Solo per uso interno — non verrà mostrato pubblicamente.</div>
       </div>
 
       <div class="form-actions">
