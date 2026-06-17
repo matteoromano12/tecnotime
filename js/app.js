@@ -60,8 +60,18 @@ async function loadCompanies() {
   }
 }
 
-function isOpen(hoursStr) {
+function isOpen(hoursStr, closedDays) {
+  const dayNames = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+  // Usiamo simMinutes per ricavare il giorno simulato (opzionale, qui usiamo solo l'ora)
   const now = simMinutes;
+
+  // Controlla giorni di chiusura
+  if (closedDays) {
+    const todayName = dayNames[Math.floor(simMinutes / (24 * 60)) % 7];
+    const closed = closedDays.split(",").map(s => s.trim());
+    if (closed.some(d => d === todayName)) return false;
+  }
+
   const ranges = [...hoursStr.matchAll(/(\d{1,2}:\d{2})\s*[-–]\s*(\d{1,2}:\d{2})/g)];
   if (!ranges.length) return true;
   return ranges.some(m => {
@@ -77,7 +87,7 @@ function renderCompanies() {
   const countEl = document.getElementById("openCount");
 
   const open = companies
-    .filter(c => isOpen(c.hours))
+    .filter(c => isOpen(c.hours, c.closedDays))
     .sort((a, b) => {
       if (a.important !== b.important) return a.important ? -1 : 1;
       return a.name.localeCompare(b.name, "it");
@@ -94,9 +104,6 @@ function renderCompanies() {
 
   grid.innerHTML = open.map(c => `
     <div class="company-card ${c.important ? "important" : ""}">
-      <div class="company-photo">
-        ${c.photo ? `<img src="${c.photo}" alt="${esc(c.name)}">` : "🏢"}
-      </div>
       <div class="company-info">
         <div class="company-name">
           ${c.important ? '<span class="important-star">★</span>' : ""}
@@ -104,60 +111,47 @@ function renderCompanies() {
         </div>
         <div class="company-hours">${esc(c.hours)}</div>
       </div>
-      <div class="company-actions">
-        ${c.telegram ? `<a class="btn-tg" href="https://t.me/${c.telegram.replace(/^@/, "")}" target="_blank" rel="noopener">✈ Telegram</a>` : ""}
-        ${c.coords   ? `<a class="btn-tg" href="https://maps.google.com/?q=${encodeURIComponent(c.coords)}" target="_blank" rel="noopener">📍 Mappa</a>` : ""}
+      <div class="company-meta">
+        ${c.coords  ? `<span class="meta-tag">📍 ${esc(c.coords)}</span>` : ""}
+        ${c.channel ? `<span class="meta-tag">📢 ${esc(c.channel)}</span>` : ""}
       </div>
     </div>`).join("");
 }
 
-let pendingPhoto = null;
-
 function openAddCompany() {
-  pendingPhoto = null;
-  ["f_name","f_hours","f_coords","f_telegram"].forEach(id => document.getElementById(id).value = "");
-  document.getElementById("f_photo").value = "";
-  document.getElementById("fileDropLabel").textContent = "📷 Clicca per caricare una foto";
+  ["f_name","f_hours","f_closedDays","f_coords","f_channel"].forEach(id => document.getElementById(id).value = "");
   openModal("addCompanyModal");
 }
 
-function handleFileSelect(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const reader = new FileReader();
-  reader.onload = e => {
-    resizeImage(e.target.result, 800, 0.75, dataUrl => {
-      pendingPhoto = dataUrl;
-      document.getElementById("fileDropLabel").textContent = "✅ " + file.name;
-    });
-  };
-  reader.readAsDataURL(file);
+function validateCoords(val) {
+  return /^-?\d+;-?\d+;-?\d+$/.test(val);
 }
 
-function resizeImage(src, maxW, quality, cb) {
-  const img = new Image();
-  img.onload = () => {
-    const scale = Math.min(1, maxW / img.width);
-    const canvas = document.createElement("canvas");
-    canvas.width  = Math.round(img.width  * scale);
-    canvas.height = Math.round(img.height * scale);
-    canvas.getContext("2d").drawImage(img, 0, 0, canvas.width, canvas.height);
-    cb(canvas.toDataURL("image/jpeg", quality));
-  };
-  img.src = src;
+function validateHours(val) {
+  return /^"[^"]+"/.test(val);
 }
 
 async function submitCompanyForm() {
-  const name     = document.getElementById("f_name").value.trim();
-  const hours    = document.getElementById("f_hours").value.trim();
-  const coords   = document.getElementById("f_coords").value.trim();
-  const telegram = document.getElementById("f_telegram").value.trim();
-  if (!name || !hours || !coords || !telegram) { showToast("⚠️ Compila tutti i campi."); return; }
+  const name       = document.getElementById("f_name").value.trim();
+  const hours      = document.getElementById("f_hours").value.trim();
+  const closedDays = document.getElementById("f_closedDays").value.trim();
+  const coords     = document.getElementById("f_coords").value.trim();
+  const channel    = document.getElementById("f_channel").value.trim();
+
+  if (!name || !hours || !coords || !channel) {
+    showToast("⚠️ Compila tutti i campi obbligatori."); return;
+  }
+  if (!validateCoords(coords)) {
+    showToast('⚠️ Coordinate non valide. Usa il formato "X;Y;Z" es. 102;66;34'); return;
+  }
+  if (!validateHours(hours)) {
+    showToast('⚠️ Orari non validi. Inizia con le virgolette, es. "Lun-Ven 08:00-18:00"'); return;
+  }
 
   const btn = document.getElementById("submitBtn");
   btn.disabled = true; btn.textContent = "Invio…";
   try {
-    await api("POST", "/api/pending", { name, hours, coords, telegram, photo: pendingPhoto });
+    await api("POST", "/api/pending", { name, hours, closedDays, coords, channel });
     closeModal("addCompanyModal");
     showToast("✅ Richiesta inviata! In attesa di approvazione.");
   } catch (e) {
@@ -235,9 +229,9 @@ async function loadPending() {
       <div class="pending-card" id="pcard_${p.id}">
         <div class="pending-name">${esc(p.name)}</div>
         <div class="pending-info"><strong>Orari:</strong> ${esc(p.hours)}</div>
+        ${p.closedDays ? `<div class="pending-info"><strong>Chiuso:</strong> ${esc(p.closedDays)}</div>` : ""}
         <div class="pending-info"><strong>Coordinate:</strong> ${esc(p.coords)}</div>
-        <div class="pending-info"><strong>Telegram:</strong> ${esc(p.telegram)}</div>
-        ${p.photo ? `<img src="${p.photo}" class="pending-photo-preview" alt="Foto">` : ""}
+        <div class="pending-info"><strong>Canale:</strong> ${esc(p.channel)}</div>
         <div class="pending-actions">
           <button class="btn-approve" onclick="approveRequest(${p.id})">✓ Approva</button>
           <button class="btn-reject"  onclick="rejectRequest(${p.id})">✕ Rifiuta</button>
@@ -275,7 +269,7 @@ async function loadAdminCompanies() {
       <div class="admin-company-item">
         <div class="admin-co-info">
           <div class="admin-co-name">${esc(c.name)}</div>
-          <div class="admin-co-meta">${esc(c.hours)} · ${esc(c.telegram)}</div>
+          <div class="admin-co-meta">${esc(c.hours)} · ${esc(c.channel)}</div>
         </div>
         <div class="admin-co-actions">
           <button class="toggle-important ${c.important ? "active" : ""}"
