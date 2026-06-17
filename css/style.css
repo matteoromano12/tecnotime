@@ -154,6 +154,15 @@ body {
   color: var(--green-deep);
 }
 
+.clock-day {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1.1rem;
+  font-weight: 500;
+  color: var(--green-mid);
+  margin-top: 8px;
+  letter-spacing: 1px;
+}
+
 .clock-sub {
   margin-top: 14px;
   font-size: 0.95rem;
@@ -694,4 +703,23 @@ body {
   .clock-display { letter-spacing: -2px; }
   .company-card { padding: 14px; }
   .modal-body { padding: 16px 18px 20px; }
+}
+
+.time-control select {
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  font-weight: 600;
+  padding: 10px 16px;
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius-sm);
+  outline: none;
+  color: var(--text-dark);
+  background: var(--white);
+  cursor: pointer;
+  transition: border-color 0.15s;
+}
+
+.time-control select:focus {
+  border-color: var(--green-bright);
+  box-shadow: 0 0 0 3px rgba(82,183,136,0.15);
 }
