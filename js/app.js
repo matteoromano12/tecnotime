@@ -1,4 +1,4 @@
-const API_BASE = "https://zerotime-api.matteoriserva0411.workers.dev";
+const API_BASE = "https://zerotime-api.tecnotimediscepolo.workers.dev";
 
 let simMinutes   = 0;
 let companies    = [];
@@ -21,11 +21,15 @@ async function api(method, path, body) {
 
 async function syncClock() {
   try {
-    const { minutes } = await api("GET", "/api/clock");
-    simMinutes = minutes;
+    const data = await api("GET", "/api/clock");
+    simMinutes = data.minutes;
+    simDay = data.day ?? 0;
     renderClock();
   } catch (e) { console.warn("Clock sync error:", e); }
 }
+
+const DAYS = ["Domenica","Lunedì","Martedì","Mercoledì","Giovedì","Venerdì","Sabato"];
+let simDay = 0;
 
 function renderClock() {
   const h = Math.floor(simMinutes / 60) % 24;
@@ -36,6 +40,8 @@ function renderClock() {
   void el.offsetWidth;
   el.classList.add("tick");
   setTimeout(() => el.classList.remove("tick"), 150);
+  const dayEl = document.getElementById("clockDay");
+  if (dayEl) dayEl.textContent = DAYS[simDay % 7];
 }
 
 function tickLocal() {
@@ -62,8 +68,10 @@ async function loadCompanies() {
 
 function isOpen(hoursStr, closedDays) {
   const dayNames = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
+  // Usiamo simMinutes per ricavare il giorno simulato (opzionale, qui usiamo solo l'ora)
   const now = simMinutes;
 
+  // Controlla giorni di chiusura
   if (closedDays) {
     const todayName = dayNames[Math.floor(simMinutes / (24 * 60)) % 7];
     const closed = closedDays.split(",").map(s => s.trim());
@@ -204,18 +212,22 @@ function closeAdmin() {
 async function loadAdminData() {
   await Promise.all([loadPending(), loadAdminCompanies()]);
   document.getElementById("adminCurrentTime").textContent = minsToStr(simMinutes);
+  document.getElementById("adminCurrentDay").textContent = DAYS[simDay % 7];
   document.getElementById("adminTimeInput").value = minsToStr(simMinutes);
+  document.getElementById("adminDayInput").value = simDay % 7;
 }
 
 async function setAdminTime() {
   const val = document.getElementById("adminTimeInput").value;
+  const day = parseInt(document.getElementById("adminDayInput").value);
   if (!val) return;
   const minutes = toMin(val);
   try {
-    await api("PUT", "/api/admin/clock", { minutes });
+    await api("PUT", "/api/admin/clock", { minutes, day });
     simMinutes = minutes;
+    simDay = day;
     renderClock();
-    showToast("⏱ Orario impostato: " + val);
+    showToast("⏱ Orario impostato: " + DAYS[day] + " " + val);
   } catch (e) { showToast("❌ " + e.message); }
 }
 
@@ -298,7 +310,7 @@ async function deleteCompany(id) {
   } catch (e) { showToast("❌ " + e.message); }
 }
 
-function openTelegram() { window.open("https://t.me/ozziuqs", "_blank", "noopener"); }
+function openTelegram() { window.open("https://t.me/TUOCANALE", "_blank", "noopener"); }
 
 function openModal(id)  { document.getElementById(id).classList.add("open"); }
 function closeModal(id) { document.getElementById(id).classList.remove("open"); }
