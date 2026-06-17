@@ -10,7 +10,6 @@
 </head>
 <body>
 
-
 <header class="header" id="mainHeader">
   <div class="header-inner">
     <div class="logo">ZeroTime</div>
@@ -84,29 +83,42 @@
     </div>
     <div class="modal-body">
       <p class="modal-desc">La richiesta verrà inviata all'admin per approvazione.</p>
+
       <div class="form-group">
         <label>Nome Azienda *</label>
         <input type="text" id="f_name" placeholder="es. Caffè Roma" />
       </div>
+
       <div class="form-group">
         <label>Orari *</label>
-        <input type="text" id="f_hours" placeholder="es. Lun-Ven 08:00-18:00, Sab 09:00-13:00" />
+        <input type="text" id="f_hours" placeholder='es. "Lun-Ven 08:00-18:00", "Sab 09:00-13:00"' />
+        <div class="field-hint">Formato: <code>"Giorno-Giorno Apertura-Chiusura"</code> oppure <code>"Giorno Apertura-Chiusura"</code> — con le virgolette, separati da virgola se più fasce.</div>
       </div>
+
       <div class="form-group">
-        <label>Coordinate (lat, lon) *</label>
-        <input type="text" id="f_coords" placeholder="es. 45.4642, 9.1900" />
+        <label>Giorni di chiusura</label>
+        <input type="text" id="f_closedDays" placeholder="es. Dom, Sab" />
+        <div class="field-hint">Giorni in cui l'azienda è chiusa tutto il giorno. Lascia vuoto se non ci sono.</div>
       </div>
+
       <div class="form-group">
-        <label>Contatto Telegram *</label>
-        <input type="text" id="f_telegram" placeholder="es. @nomeutente" />
+        <label>Coordinate Minecraft *</label>
+        <input type="text" id="f_coords" placeholder="es. 102;66;34" />
+        <div class="field-hint">Formato: <code>X;Y;Z</code></div>
       </div>
+
       <div class="form-group">
-        <label>Foto Azienda</label>
-        <div class="file-drop" onclick="document.getElementById('f_photo').click()">
-          <span id="fileDropLabel">📷 Clicca per caricare una foto</span>
-          <input type="file" id="f_photo" accept="image/*" style="display:none" onchange="handleFileSelect(this)" />
-        </div>
+        <label>Canale Azienda *</label>
+        <input type="text" id="f_channel" placeholder="es. @nomecanale" />
+        <div class="field-hint">Il canale verrà mostrato nella pagina principale.</div>
       </div>
+
+      <div class="form-group">
+        <label>Tuo contatto Telegram *</label>
+        <input type="text" id="f_telegram" placeholder="es. @tuonomeutente" />
+        <div class="field-hint">Non verrà mostrato pubblicamente.</div>
+      </div>
+
       <div class="form-actions">
         <button class="btn-secondary" onclick="closeModal('addCompanyModal')">Annulla</button>
         <button class="btn-primary" id="submitBtn" onclick="submitCompanyForm()">Invia Richiesta</button>
