@@ -1,4 +1,4 @@
-const API_BASE = "https://zerotime-api.tecnotimediscepolo.workers.dev";
+const API_BASE = "https://zerotime-api.matteoriserva0411.workers.dev";
 
 let simMinutes   = 0;
 let companies    = [];
@@ -62,10 +62,8 @@ async function loadCompanies() {
 
 function isOpen(hoursStr, closedDays) {
   const dayNames = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-  // Usiamo simMinutes per ricavare il giorno simulato (opzionale, qui usiamo solo l'ora)
   const now = simMinutes;
 
-  // Controlla giorni di chiusura
   if (closedDays) {
     const todayName = dayNames[Math.floor(simMinutes / (24 * 60)) % 7];
     const closed = closedDays.split(",").map(s => s.trim());
@@ -119,7 +117,7 @@ function renderCompanies() {
 }
 
 function openAddCompany() {
-  ["f_name","f_hours","f_closedDays","f_coords","f_channel"].forEach(id => document.getElementById(id).value = "");
+  ["f_name","f_hours","f_closedDays","f_coords","f_channel","f_telegram"].forEach(id => document.getElementById(id).value = "");
   openModal("addCompanyModal");
 }
 
@@ -137,12 +135,13 @@ async function submitCompanyForm() {
   const closedDays = document.getElementById("f_closedDays").value.trim();
   const coords     = document.getElementById("f_coords").value.trim();
   const channel    = document.getElementById("f_channel").value.trim();
+  const telegram   = document.getElementById("f_telegram").value.trim();
 
-  if (!name || !hours || !coords || !channel) {
+  if (!name || !hours || !coords || !channel || !telegram) {
     showToast("⚠️ Compila tutti i campi obbligatori."); return;
   }
   if (!validateCoords(coords)) {
-    showToast('⚠️ Coordinate non valide. Usa il formato "X;Y;Z" es. 102;66;34'); return;
+    showToast('⚠️ Coordinate non valide. Usa il formato X;Y;Z es. 102;66;34'); return;
   }
   if (!validateHours(hours)) {
     showToast('⚠️ Orari non validi. Inizia con le virgolette, es. "Lun-Ven 08:00-18:00"'); return;
@@ -151,7 +150,7 @@ async function submitCompanyForm() {
   const btn = document.getElementById("submitBtn");
   btn.disabled = true; btn.textContent = "Invio…";
   try {
-    await api("POST", "/api/pending", { name, hours, closedDays, coords, channel });
+    await api("POST", "/api/pending", { name, hours, closedDays, coords, channel, telegram });
     closeModal("addCompanyModal");
     showToast("✅ Richiesta inviata! In attesa di approvazione.");
   } catch (e) {
@@ -232,6 +231,7 @@ async function loadPending() {
         ${p.closedDays ? `<div class="pending-info"><strong>Chiuso:</strong> ${esc(p.closedDays)}</div>` : ""}
         <div class="pending-info"><strong>Coordinate:</strong> ${esc(p.coords)}</div>
         <div class="pending-info"><strong>Canale:</strong> ${esc(p.channel)}</div>
+        <div class="pending-info"><strong>Contatto:</strong> ${esc(p.telegram)}</div>
         <div class="pending-actions">
           <button class="btn-approve" onclick="approveRequest(${p.id})">✓ Approva</button>
           <button class="btn-reject"  onclick="rejectRequest(${p.id})">✕ Rifiuta</button>
