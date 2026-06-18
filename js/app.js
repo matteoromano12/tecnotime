@@ -45,7 +45,11 @@ function renderClock() {
 }
 
 function tickLocal() {
-  simMinutes = (simMinutes + 1) % (24 * 60);
+  simMinutes++;
+  if (simMinutes >= 24 * 60) {
+    simMinutes = 0;
+    simDay = (simDay + 1) % 7;
+  }
   renderClock();
   renderCompanies();
 }
@@ -68,12 +72,10 @@ async function loadCompanies() {
 
 function isOpen(hoursStr, closedDays) {
   const dayNames = ["Dom","Lun","Mar","Mer","Gio","Ven","Sab"];
-  // Usiamo simMinutes per ricavare il giorno simulato (opzionale, qui usiamo solo l'ora)
   const now = simMinutes;
 
-  // Controlla giorni di chiusura
   if (closedDays) {
-    const todayName = dayNames[Math.floor(simMinutes / (24 * 60)) % 7];
+    const todayName = dayNames[simDay % 7];
     const closed = closedDays.split(",").map(s => s.trim());
     if (closed.some(d => d === todayName)) return false;
   }
